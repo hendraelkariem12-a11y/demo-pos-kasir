@@ -6,7 +6,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 app = Flask(__name__)
 app.secret_key = 'pos-kasir-hendra-media-tech-2026'
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'pos_toko.db')
+# Lokasi DB khusus Serverless Vercel (/tmp)
+DB_PATH = '/tmp/pos_toko.db'
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
@@ -52,11 +53,13 @@ def init_db():
     conn.commit()
     conn.close()
 
+# Inisialisasi DB saat aplikasi pertama kali berjalan
 init_db()
 
 # Halaman Kasir Utama (Point of Sale)
 @app.route('/')
 def halaman_kasir():
+    init_db() # Pastikan tabel selalu siap
     conn = get_db_connection()
     produk_list = conn.execute('SELECT * FROM produk ORDER BY nama ASC').fetchall()
     conn.close()
@@ -139,7 +142,7 @@ def laporan_penjualan():
     transaksi_list = conn.execute('SELECT * FROM transaksi ORDER BY id DESC').fetchall()
     total_omzet = sum(t['total'] for t in transaksi_list)
     conn.close()
-    return render_template('laporan', transaksi_list=transaksi_list, total_omzet=total_omzet)
+    return render_template('laporan.html', transaksi_list=transaksi_list, total_omzet=total_omzet)
 
 if __name__ == '__main__':
     app.run(debug=True)
