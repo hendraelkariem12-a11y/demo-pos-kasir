@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card card-custom p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold text-secondary mb-0"><i class="fa-solid fa-chart-line me-2"></i>Laporan Omzet Penjualan</h4>
+        <div class="bg-success text-white px-3 py-2 rounded-3 fw-bold">
+            Total Omzet: Rp {{ "{:,}".format(total_omzet) }}
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Waktu Transaksi</th>
+                    <th>Detail Items</th>
+                    <th>Total Belanja</th>
+                    <th>Bayar</th>
+                    <th>Kembali</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transaksi_list %}
+                <tr>
+                    <td class="small">{{ t.tanggal }}</td>
+                    <td class="small">{{ t.detail_items }}</td>
+                    <td class="fw-bold text-primary">Rp {{ "{:,}".format(t.total) }}</td>
+                    <td class="small">Rp {{ "{:,}".format(t.bayar) }}</td>
+                    <td class="small">Rp {{ "{:,}".format(t.kembali) }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Belum ada transaksi recorded.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
