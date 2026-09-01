@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-3">
+    <!-- Kolom Kiri: Daftar Produk -->
+    <div class="col-md-7">
+        <div class="card card-custom p-3 h-100">
+            <h5 class="fw-bold mb-3 text-secondary"><i class="fa-solid fa-store me-2"></i>Pilih Produk</h5>
+            <div class="row g-2" style="max-height: 520px; overflow-y: auto;">
+                {% for p in produk_list %}
+                <div class="col-6 col-md-4">
+                    <div class="card h-100 border p-2 text-center shadow-sm btn-pilih-produk" 
+                         style="cursor: pointer; position: relative;"
+                         onclick="tambahKeKeranjang({{ p.id }}, '{{ p.nama }}', {{ p.harga }}, {{ p.stok }})">
+                        {% if p.stok < 5 %}
+                        <span class="badge bg-danger position-absolute top-0 start-0 m-1" style="font-size: 9px;">Stok Menipis!</span>
+                        {% endif %}
+                        <div class="fw-bold text-dark mt-2" style="font-size: 14px;">{{ p.nama }}</div>
+                        <div class="text-success fw-bold small">Rp {{ "{:,}".format(p.harga) }}</div>
+                        <div class="text-muted small" style="font-size: 11px;">Stok: {{ p.stok }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Kolom Kanan: Rincian Keranjang Kasir -->
+    <div class="col-md-5">
+        <div class="card card-custom p-3">
+            <h5 class="fw-bold mb-3 text-secondary"><i class="fa-solid fa-cart-shopping me-2"></i>Keranjang Pesanan</h5>
+            
+            <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+                <table class="table table-sm align-middle small">
+                    <thead>
+                        <tr>
+                            <th>Produk</th>
+                            <th>Qty</th>
+                            <th>Subtotal</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel-keranjang">
+                        <tr><td colspan="4" class="text-center text-muted">Keranjang kosong</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr>
+            <div class="d-flex justify-content-between h4 fw-bold mb-3">
+                <span>TOTAL:</span>
+                <span class="text-primary" id="text-total">Rp 0</span>
+            </div>
+
+            <div class="mb-2">
+                <label class="form-label small fw-bold">Nominal Pembayaran (Rp)</label>
+                <input type="number" id="input-bayar" class="form-control form-control-lg fw-bold" placeholder="0" oninput="hitungKembalian()">
+            </div>
+
+            <div class="d-flex justify-content-between fw-bold text-muted mb-3">
+                <span>Kembalian:</span>
+                <span id="text-kembalian">Rp 0</span>
+            </div>
+
+            <button class="btn btn-gold w-100 py-2 fw-bold fs-5" id="btn-bayar" onclick="prosesBayar()" disabled>
+                <i class="fa-solid fa-print me-2"></i>Bayar & Cetak Struk
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let keranjang = [];
+
+function tambahKeKeranjang(id, nama, harga, stokMaks) {
+    let item = keranjang.find(x => x.id === id);
+    if (item) {
+        if (item.qty < stokMaks) {
+            item.qty++;
+        } else {
+            alert("Stok produk tidak mencukupi!");
+        }
+    } else {
+        if (stokMaks > 0) {
+            keranjang.push({ id: id, nama: nama, harga: harga, qty: 1, stokMaks: stokMaks });
+        } else {
+            alert("Stok produk habis!");
+        }
+    }
+    updateTampilanKeranjang();
+}
+
+function hapusItem(id) {
+    keranjang = keranjang.filter(x => x.id !== id);
+    updateTampilanKeranjang();
+}
+
+function updateTampilanKeranjang() {
+    let tbody = document.getElementById('tabel-keranjang');
+    tbody.innerHTML = '';
+    let total = 0;
+
+    if (keranjang.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Keranjang kosong</td></tr>';
+    } else {
+        keranjang.forEach(item => {
+            let subtotal = item.harga * item.qty;
+            total += subtotal;
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${item.nama}</strong></td>
+                    <td>${item.qty}</td>
+                    <td>Rp ${subtotal.toLocaleString()}</td>
+                    <td><button class="btn btn-link text-danger p-0" onclick="hapusItem(${item.id})"><i class="fa-solid fa-xmark"></i></button></td>
+                </tr>
+            `;
+        });
+    }
+
+    document.getElementById('text-total').innerText = 'Rp ' + total.toLocaleString();
+    hitungKembalian();
+}
+
+function hitungKembalian() {
+    let total = keranjang.reduce((sum, item) => sum + (item.harga * item.qty), 0);
+    let bayar = parseInt(document.getElementById('input-bayar').value) || 0;
+    let kembalian = bayar - total;
+
+    let textKembali = document.getElementById('text-kembalian');
+    let btnBayar = document.getElementById('btn-bayar');
+
+    if (total > 0 && bayar >= total) {
+        textKembali.innerText = 'Rp ' + kembalian.toLocaleString();
+        textKembali.className = 'text-success fw-bold';
+        btnBayar.disabled = false;
+    } else {
+        textKembali.innerText = 'Rp 0';
+        textKembali.className = 'text-muted';
+        btnBayar.disabled = true;
+    }
+}
+
+function prosesBayar() {
+    let total = keranjang.reduce((sum, item) => sum + (item.harga * item.qty), 0);
+    let bayar = parseInt(document.getElementById('input-bayar').value) || 0;
+
+    fetch('/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: keranjang, total: total, bayar: bayar })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            window.print(); // Memicu Cetak Struk
+            alert("Transaksi Berhasil!");
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+</script>
+{% endblock %}
