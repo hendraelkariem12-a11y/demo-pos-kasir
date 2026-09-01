@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Form Tambah Produk -->
+    <div class="col-md-4">
+        <div class="card card-custom p-3">
+            <h5 class="fw-bold mb-3 text-secondary"><i class="fa-solid fa-plus me-2"></i>Tambah Produk Baru</h5>
+            <form method="POST">
+                <div class="mb-2">
+                    <label class="form-label small">Nama Produk</label>
+                    <input type="text" name="nama" class="form-control" placeholder="Misal: Kopi Susu" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Harga Jual (Rp)</label>
+                    <input type="number" name="harga" class="form-control" placeholder="10000" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small">Stok Awal</label>
+                    <input type="number" name="stok" class="form-control" value="10" required>
+                </div>
+                <button type="submit" class="btn btn-gold w-100 fw-bold">Simpan Produk</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabel Kelola Stok -->
+    <div class="col-md-8">
+        <div class="card card-custom p-3">
+            <h5 class="fw-bold mb-3 text-secondary"><i class="fa-solid fa-boxes-stacked me-2"></i>Daftar Stok Produk</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Nama Produk</th>
+                            <th>Harga</th>
+                            <th>Stok</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in produk_list %}
+                        <tr>
+                            <td class="fw-bold">{{ p.nama }}</td>
+                            <td>Rp {{ "{:,}".format(p.harga) }}</td>
+                            <td><strong>{{ p.stok }}</strong></td>
+                            <td>
+                                {% if p.stok < 5 %}
+                                <span class="badge bg-danger">Stok Menipis</span>
+                                {% else %}
+                                <span class="badge bg-success">Aman</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form action="/produk/hapus/{{ p.id }}" method="POST" onsubmit="return confirm('Hapus produk ini?');">
+                                    <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
